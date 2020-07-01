@@ -1,10 +1,12 @@
 ﻿using Leap.Unity;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class GameLogic : MonoBehaviour
+public class GameLogicScene: MonoBehaviour
 {
     [SerializeField] private string interactiveTag = "Interactive";
+    [SerializeField] private string scene = "";
     [SerializeField] private GameObject pointerCircle = null;
     [SerializeField] private GameObject loaderCircle = null;
     [SerializeField] private GameObject leapController = null;
@@ -17,6 +19,8 @@ public class GameLogic : MonoBehaviour
     private Pointer pointer = null;
     private Loader loader = null;
     private int buttonID = int.MaxValue;
+    private string category = "";
+    private Color previousButtonColour = default;
 
     private Vector3 offscreenVector = new Vector3(10000, 10000, 0);
 
@@ -39,8 +43,16 @@ public class GameLogic : MonoBehaviour
 
     private void LoaderOnLoadingComplete()
     {
-        var r = Resources.Load<Sprite>("Images/landscape"+buttonID);
-        imageViewer.sprite = r;
+        if (category == "sub")
+        {
+            var r = Resources.Load<Sprite>("Images/" + scene + buttonID);
+            imageViewer.sprite = r;
+        }
+        else if (category == "main")
+        {
+            var s = scene == "car" ? "landscapeScene" : "carScene";
+            SceneManager.LoadScene(s);
+        }
     }
 
     private void PointerOnCollisionExit(Collider2D collision)
@@ -56,7 +68,9 @@ public class GameLogic : MonoBehaviour
             if (renderer != null)
             {
                 buttonID = int.MaxValue;
-                renderer.color = Color.white;
+                category = "";
+                renderer.color = previousButtonColour;
+                previousButtonColour = default;
                 loader.StopLoading();
             }
         }
@@ -75,7 +89,9 @@ public class GameLogic : MonoBehaviour
             if (renderer != null)
             {
                 buttonID = collision.GetComponent<UIButton>().ID;
+                category = collision.GetComponent<UIButton>().Category;
                 loader.enabled = true;
+                previousButtonColour = renderer.color;
                 renderer.color = Color.red;
                 loader.StartLoading();
             }
